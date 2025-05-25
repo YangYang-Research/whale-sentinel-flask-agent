@@ -21,17 +21,16 @@ class Protection(object):
             request_meta_data = Protection.do(self)
             Agent._write_to_storage(self, request_meta_data)
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Protection._mode_lite", e))
+            logger.error(f"Something went wrong at Protection.__init__.\n Error message - {e}")
     
-    def _mode_monitor(self):
+    def _mode_monitor(self, request_meta_data) -> None:
         """
         Perform the Whale Sentinel Flask Agent Protection in monitor mode
         """
         try:
-            request_meta_data = Protection.do(self)
             Agent._detection(self, request_meta_data)
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Protection._mode_monitor", e))
+            logger.error(f"Something went wrong at Protection._mode_monitor.\n Error message - {e}")
 
     def _mode_protection(self, profile) -> None:
         """
@@ -48,10 +47,10 @@ class Protection(object):
                 cad = detection.get("ws_module_common_attack_detection", {})
                 if wad >= wad_threshold or dgad >= dgad_threshold or any(cad.values()):
                     return True
-                return True
+                return False
             return False
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Protection._mode_protection", e))
+            logger.error(f"Something went wrong at Protection._mode_protection.\n Error message - {e}")
 
     def _secure_response(self, profile, response):
         """
@@ -63,8 +62,8 @@ class Protection(object):
                 response.headers[key] = value
             return response
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Protection._secure_response", e))
-  
+            logger.error(f"Something went wrong at Protection._secure_response.\n Error message - {e}")
+               
     def do(self) -> None:
         """
         Perform the Whale Sentinel Flask Agent Protection
@@ -121,4 +120,4 @@ class Protection(object):
             }
             return meta_data
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Protection.do", e)) 
+            logger.error(f"Something went wrong at Protection.do.\n Error message - {e}")
