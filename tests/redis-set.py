@@ -11,12 +11,12 @@ r = redis.Redis(
 # Dữ liệu JSON cấu hình agent
 agent_config = {
   "profile": {
-    "running_mode": "protection",
-    "last_run_mode": "lite",
+    "running_mode": "lite",
+    "last_run_mode": "monitor",
     "lite_mode_data_is_synchronized": False,
     "lite_mode_data_synchronize_status": "fail",
     "ws_module_web_attack_detection": {
-      "enable": False,
+      "enable": True,
       "detect_header": False,
       "threshold": 80,
     },

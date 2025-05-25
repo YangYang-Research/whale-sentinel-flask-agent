@@ -71,7 +71,8 @@ class WhaleSentinelFlaskAgent(object):
                 response = make_response(func(*args, **kwargs))
                                     
                 if running_mode  == "lite":
-                    Protection._mode_lite(self)
+                    request_meta_data = Protection.do(self)
+                    threading.Thread(target=Protection._mode_lite, args=(self, request_meta_data), daemon=True).start()
 
                 if running_mode != "lite" and last_run_mode == "lite" and not data_synchronized and data_synchronize_status == "fail":
                     threading.Thread(target=Agent._synchronize, args=(self, profile), daemon=True).start()

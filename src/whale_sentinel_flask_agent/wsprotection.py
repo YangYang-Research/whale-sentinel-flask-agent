@@ -13,12 +13,11 @@ class Protection(object):
         Initialize the Whale Sentinel Flask Agent Protection
         """
     
-    def _mode_lite(self):
+    def _mode_lite(self, request_meta_data) -> None:
         """
         Perform the Whale Sentinel Flask Agent Protection in lite mode
         """
         try:
-            request_meta_data = Protection.do(self)
             Agent._write_to_storage(self, request_meta_data)
         except Exception as e:
             logger.error(f"Something went wrong at Protection.__init__.\n Error message - {e}")
