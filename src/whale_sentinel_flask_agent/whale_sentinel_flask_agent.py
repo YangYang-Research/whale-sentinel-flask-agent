@@ -72,18 +72,19 @@ class WhaleSentinelFlaskAgent(object):
                 result = make_response(func(*args, **kwargs))
                                     
                 if running_mode  == "lite":
-                    request_meta_data = Protection.do(self)
+                    request_meta_data = Protection.do(self, request)
                     threading.Thread(target=Protection._mode_lite, args=(self, request_meta_data), daemon=True).start()
 
                 if running_mode != "lite" and last_run_mode == "lite" and not data_synchronized and data_synchronize_status == "fail":
                     threading.Thread(target=Agent._synchronize, args=(self, profile), daemon=True).start()
 
                 if running_mode == "monitor":
-                    request_meta_data = Protection.do(self)
+                    request_meta_data = Protection.do(self, request)
                     threading.Thread(target=Protection._mode_monitor, args=(self, request_meta_data), daemon=True).start()
                 
                 if running_mode == "protection":
-                    blocked = Protection._mode_protection(self, profile)
+                    request_meta_data = Protection.do(self, request)
+                    blocked = Protection._mode_protection(self, profile, request_meta_data)
                     if blocked:
                         logger.info("Whale Sentinel Flask Agent Protection: Request blocked by Whale Sentinel Protection")
                         return jsonify({

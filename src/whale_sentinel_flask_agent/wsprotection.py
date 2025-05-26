@@ -1,5 +1,4 @@
 from user_agents import parse
-from flask import request
 from datetime import datetime
 from .wslogger import logger
 from .wsagent import Agent
@@ -31,14 +30,13 @@ class Protection(object):
         except Exception as e:
             logger.error(f"Something went wrong at Protection._mode_monitor.\n Error message - {e}")
 
-    def _mode_protection(self, profile) -> None:
+    def _mode_protection(self, profile, request_meta_data) -> None:
         """
         Perform the Whale Sentinel Flask Agent Protection in protection mode
         """
         try:
             wad_threshold = profile.get("ws_module_web_attack_detection", {}).get("threshold", {})
             dgad_threshold = profile.get("ws_module_dga_detection", {}).get("threshold", {})
-            request_meta_data = Protection.do(self)
             detection = Agent._detection(self, request_meta_data)
             if detection is not None:
                 wad = detection.get("ws_module_web_attack_detection_score", 0)
@@ -63,7 +61,7 @@ class Protection(object):
         except Exception as e:
             logger.error(f"Something went wrong at Protection._secure_response.\n Error message - {e}")
                
-    def do(self) -> None:
+    def do(self, request) -> None:
         """
         Perform the Whale Sentinel Flask Agent Protection
         """
@@ -71,25 +69,24 @@ class Protection(object):
             req_method = request.method
             req_path = request.path
             req_host = request.host
-            # req_headers = request.headers
+            req_headers = request.headers
             req_body = request.get_data(as_text=True)
             req_query_string = request.query_string.decode('utf-8')
             req_ip = request.remote_addr
             req_user_agent = request.user_agent.string
-            req_content_type = request.content_type
-            req_content_length = request.content_length
+            req_content_type = req_headers.get("Content-Type", "")
+            req_content_length = int(req_headers.get("Content-Length", 0))
             req_referrer = request.referrer
             req_device = request.user_agent.platform
             req_network = request.user_agent.browser
 
             parsed_ua = parse(req_user_agent)
             req_ua_platform = parsed_ua.os.family
-
             req_ua_browser = parsed_ua.browser.family
             req_ua_browser_version = parsed_ua.browser.version_string
 
             meta_data = {
-                "agent_id": self.agent_id,
+            "agent_id": self.agent_id,
                 "payload": {
                     "data": {
                         "client_information": {
