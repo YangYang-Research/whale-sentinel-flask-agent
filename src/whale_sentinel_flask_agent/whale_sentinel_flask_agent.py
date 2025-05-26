@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from flask import request, make_response
+from flask import request, make_response, jsonify
 from .wslogger import logger
 from .wsprotection import Protection
 from .wsagent import Agent
@@ -67,8 +67,9 @@ class WhaleSentinelFlaskAgent(object):
                 last_run_mode = profile.get("last_run_mode", "lite")
                 data_synchronized = profile.get("lite_mode_data_is_synchronized", False)
                 data_synchronize_status = profile.get("lite_mode_data_synchronize_status", "fail")
-                secure_respone = profile.get("secure_response_headers", {}).get("enable", False)
-                response = make_response(func(*args, **kwargs))
+                secure_response_enabled = profile.get("secure_response_headers", {}).get("enable", False)
+                
+                result = make_response(func(*args, **kwargs))
                                     
                 if running_mode  == "lite":
                     request_meta_data = Protection.do(self)
@@ -82,18 +83,19 @@ class WhaleSentinelFlaskAgent(object):
                     threading.Thread(target=Protection._mode_monitor, args=(self, request_meta_data), daemon=True).start()
                 
                 if running_mode == "protection":
-                    protection = Protection._mode_protection(self, profile)
-                    if protection:
+                    blocked = Protection._mode_protection(self, profile)
+                    if blocked:
                         logger.info("Whale Sentinel Flask Agent Protection: Request blocked by Whale Sentinel Protection")
-                        response.status_code = 403
-                        response.data = f"Forbidden: Request blocked by Whale Sentinel Protection.\nTime: {datetime.datetime.now()}\nIP: {request.remote_addr}"
-                        return response
+                        return jsonify({
+                                "msg": "Forbidden: Request blocked by Whale Sentinel Protection.",
+                                "time": str(datetime.datetime.now()),
+                                "ip": request.client.host
+                            }), 403
 
-                if secure_respone:
-                    new_response = Protection._secure_response(self, profile, response)
-                    return new_response
+                if secure_response_enabled:
+                    result = Protection._secure_response(self, profile, result)
 
-                return response
+                return result
             return wrapper
         return _whale_sentinel_agent_protection
     
