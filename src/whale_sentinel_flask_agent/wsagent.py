@@ -20,7 +20,7 @@ class Agent(object):
             Agent._communication(self)
             Agent._init_storage(self)
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent.__init__", e))
+            logger.error(f"Something went wrong at Agent.__init__.\n Error message - {e}")
             raise
     
     def _banner():
@@ -49,7 +49,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
             if not os.path.exists(storage_file):
                 open(storage_file, "w").close()
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._init_storage", e))
+            logger.error(f"Something went wrong at Agent._init_storage.\n Error message - {e}")
 
     def _remove_storage(self):
         """
@@ -66,7 +66,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                         os.remove(file_path)
                 os.rmdir(storage_directory)
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._remove_storage", e))
+            logger.error(f"Something went wrong at Agent._remove_storage.\n Error message - {e}")
 
     def _write_to_storage(self, data):
         """
@@ -86,7 +86,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                 json.dump(data, f)
                 f.write("\n")
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._write_to_storage", e))
+            logger.error(f"Something went wrong at Agent._write_to_storage.\n Error message - {e}")
 
     def _read_from_storage(self):
         """
@@ -110,10 +110,10 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                         try:
                             data_list.append(json.loads(line))
                         except json.JSONDecodeError as e:
-                            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._read_from_storage", e))
+                            logger.error(f"Something went wrong at Agent._read_from_storage.\n Error message - {e}")
             return data_list
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._read_from_storage", e))
+            logger.error(f"Something went wrong at Agent._read_from_storage.\n Error message - {e}")
             
     def _communication(self):
         """
@@ -138,7 +138,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
             else:
                 logger.info("Whale Sentinel Flask Agent Protection: Commmunication with Whale Sentinel Gateway successful")
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._communication", e))
+            logger.error(f"Something went wrong at Agent._communication.\n Error message - {e}")
 
     def _profile(self) -> None:
         """
@@ -157,7 +157,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                 return None
             return gateway_response.get("profile", {})
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._profile", e))
+            logger.error(f"Something went wrong at Agent._profile.\n Error message - {e}")
     
     def _detection(self, data) -> None:
         """
@@ -172,7 +172,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                 return None
             return gateway_response.get("data", {})
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._detection", e))
+            logger.error(f"Something went wrong at Agent._detection.\n Error message - {e}")
 
     def _synchronize(self, profile) -> None:
         """
@@ -182,18 +182,19 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
             endpoint = self.ws_gateway_api
             sync_endpoint = f"{endpoint}/agent-synchronize"
             data_synchronize = Agent._read_from_storage(self)
-            data_synchronize_status = profile.get("lite_mode_data_synchronize_status", "fail")
             for item in data_synchronize:
-                if data_synchronize_status == "fail":
-                    progress_status = {
-                        "agent_id": self.agent_id,
-                        "payload" : {
-                            "lite_mode_data_synchronize_status": "inprogress",
-                            "lite_mode_data_is_synchronized": False
-                        },
-                        "request_created_at": datetime.now().astimezone().isoformat()
-                    }
-                    Agent._make_call(self, sync_endpoint, progress_status)
+                progress_status = {
+                    "agent_id": self.agent_id,
+                    "payload" : {
+                        "lite_mode_data_synchronize_status": "inprogress",
+                        "lite_mode_data_is_synchronized": False
+                    },
+                    "request_created_at": datetime.now().astimezone().isoformat()
+                }
+                gateway_response = Agent._make_call(self, sync_endpoint, progress_status)
+                if gateway_response is None:
+                    logger.info("Whale Sentinel Flask Agent Protection: Communication with Whale Sentinel Gateway failed")
+                    return None
                 gateway_response = Agent._make_call(self, endpoint, item)
                 if gateway_response is None:
                     logger.info("Whale Sentinel Flask Agent Protection: Communication with Whale Sentinel Gateway failed")
@@ -221,7 +222,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                 return True
             return None
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._synchronize", e))
+            logger.error(f"Something went wrong at Agent._synchronize.\n Error message - {e}")
 
     def _make_call(self, endpoint, data) -> None:
         """
@@ -240,7 +241,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                 return None
             return gateway_response.json()
         except requests.exceptions.RequestException as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._make_call", e))
+            logger.error(f"Something went wrong at Agent._make_call.\n Error message - {e}")
         except Exception as e:
-            logger.error(f"Something went wrong at {0}.\n Error message - {1}".format("Agent._make_call", e))
+            logger.error(f"Something went wrong at Agent._make_call.\n Error message - {e}")
     
