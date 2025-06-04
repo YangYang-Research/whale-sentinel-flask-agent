@@ -18,11 +18,11 @@ agent_config = {
     "ws_module_web_attack_detection": {
       "enable": True,
       "detect_header": False,
-      "threshold": 80,
+      "threshold": 70,
     },
     "ws_module_dga_detection": {
       "enable": True,
-      "threshold": 80,
+      "threshold": 70,
     },
     "ws_module_common_attack_detection": {
       "enable": True,

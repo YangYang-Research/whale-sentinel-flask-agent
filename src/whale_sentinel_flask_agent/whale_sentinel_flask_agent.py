@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from flask import request, make_response, jsonify
-from .wslogger import logger
+from .wslogger import wslogger
 from .wsprotection import Protection
 from .wsagent import Agent
 import threading
@@ -34,7 +34,7 @@ class WhaleSentinelFlaskAgent(object):
             self.agent_id = WS_AGENT_ID
             self._initialize()
         except Exception as e:
-            logger.error(f"Error initializing Whale Sentinel Flask Agent: {e}")
+            wslogger.error(f"Error initializing Whale Sentinel Flask Agent: {e}")
             raise
 
     def _initialize(self):
@@ -50,7 +50,7 @@ class WhaleSentinelFlaskAgent(object):
                 raise ValueError("WS_AGENT_ID must be set")
             Agent.__init__(self)
         except Exception as e:
-            logger.error(f"Error in Whale Sentinel Flask Agent initialization: {e}")
+            wslogger.error(f"Error in Whale Sentinel Flask Agent initialization: {e}")
 
     def whale_sentinel_agent_protection(self):
         def _whale_sentinel_agent_protection(func):
@@ -60,7 +60,9 @@ class WhaleSentinelFlaskAgent(object):
             def wrapper(*args, **kwargs):
                 profile = Agent._profile(self)
                 if profile is None:
-                    logger.info("Whale Sentinel Flask Agent Protection: No profile found, skipping protection")
+                    wslogger.info("Whale Sentinel Flask Agent Protection: No profile found, skipping protection")
+                    request_meta_data = Protection.do(self, request)
+                    threading.Thread(target=Agent._write_to_storage, args=(self, request_meta_data), daemon=True).start()
                     return func(*args, **kwargs)
                 
                 running_mode = profile.get("running_mode", "lite")
@@ -70,7 +72,10 @@ class WhaleSentinelFlaskAgent(object):
                 secure_response_enabled = profile.get("secure_response_headers", {}).get("enable", False)
                 
                 result = make_response(func(*args, **kwargs))
-                                    
+                
+                if running_mode == "off":
+                    return result
+
                 if running_mode  == "lite":
                     request_meta_data = Protection.do(self, request)
                     threading.Thread(target=Protection._mode_lite, args=(self, request_meta_data), daemon=True).start()
@@ -86,7 +91,7 @@ class WhaleSentinelFlaskAgent(object):
                     request_meta_data = Protection.do(self, request)
                     blocked = Protection._mode_protection(self, profile, request_meta_data)
                     if blocked:
-                        logger.info("Whale Sentinel Flask Agent Protection: Request blocked by Whale Sentinel Protection")
+                        wslogger.info("Whale Sentinel Flask Agent Protection: Request blocked by Whale Sentinel Protection")
                         return jsonify({
                                 "msg": "Forbidden: Request blocked by Whale Sentinel Protection.",
                                 "time": str(datetime.datetime.now()),
