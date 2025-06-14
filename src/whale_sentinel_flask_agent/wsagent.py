@@ -134,9 +134,13 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
             data_2 = {
                 "agent_id": self.agent_id,
                 "agent_name": self.agent_name,
-                "payload" : {
-                    "lite_mode_data_synchronize_status": "none",
-                    "lite_mode_data_is_synchronized": False
+                "payload": {
+                    "data": {
+                        "profile" : {
+                            "lite_mode_data_synchronize_status": "none",
+                            "lite_mode_data_is_synchronized": False
+                        },
+                    }
                 },
                 "ip_address": self.ip_address,
                 "request_created_at": datetime.now().astimezone().isoformat()
@@ -212,9 +216,13 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                 progress_status = {
                     "agent_id": self.agent_id,
                     "agent_name": self.agent_name,
-                    "profile" : {
-                        "lite_mode_data_synchronize_status": "inprogress",
-                        "lite_mode_data_is_synchronized": False
+                    "payload": {
+                        "data": {
+                            "profile" : {
+                                "lite_mode_data_synchronize_status": "inprogress",
+                                "lite_mode_data_is_synchronized": False
+                            },
+                        }
                     },
                     "ip_address": self.ip_address,
                     "request_created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -229,9 +237,13 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
                     fail_status = {
                         "agent_id": self.agent_id,
                         "agent_name": self.agent_name,
-                        "profile": {
-                            "lite_mode_data_synchronize_status": "failure",
-                            "lite_mode_data_is_synchronized": False,
+                        "payload": {
+                            "data": {
+                                "profile" : {
+                                    "lite_mode_data_synchronize_status": "failure",
+                                    "lite_mode_data_is_synchronized": False
+                                },
+                            }
                         },
                         "ip_address": self.ip_address,
                         "request_created_at": datetime.now().astimezone().isoformat()
@@ -241,9 +253,13 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
             success_status = {
                 "agent_id": self.agent_id,
                 "agent_name": self.agent_name,
-                "profile": {
-                    "lite_mode_data_synchronize_status": "successed",
-                    "lite_mode_data_is_synchronized": True,
+                "payload": {
+                    "data": {
+                        "profile" : {
+                            "lite_mode_data_synchronize_status": "successed",
+                            "lite_mode_data_is_synchronized": False
+                        },
+                    }
                 },
                 "ip_address": self.ip_address,
                 "request_created_at": datetime.now().astimezone().isoformat()
@@ -273,7 +289,7 @@ The Runtime Application Self Protection (RASP) Solution - Created by YangYang-Re
             if gateway_response.status_code != 200:
                 return None
             response_data = gateway_response.json()
-            if response_data.get("status", "Fail") != "Success":
+            if response_data.get("status", "Error") != "Success":
                 return None
             return gateway_response.json()
         except requests.exceptions.RequestException as e:
