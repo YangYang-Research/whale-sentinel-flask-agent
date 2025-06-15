@@ -95,8 +95,8 @@ class WhaleSentinelFlaskAgent(object):
                 
                 if running_mode == "protection":
                     request_meta_data = Protection.do(self, request)
-                    blocked = Protection._mode_protection(self, profile, request_meta_data)
-                    if blocked:
+                    is_blocked = Protection._mode_protection(self, profile, request_meta_data)
+                    if is_blocked:
                         wslogger.info("Whale Sentinel Flask Agent Protection: Request blocked by Whale Sentinel Protection")
                         return jsonify({
                                 "msg": "Forbidden: Request blocked by Whale Sentinel Protection.",
