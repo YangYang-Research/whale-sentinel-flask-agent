@@ -6,6 +6,7 @@ from .wsprotection import Protection
 from .wsagent import Agent
 import threading
 import datetime
+from functools import wraps
 
 class WhaleSentinelFlaskAgent(object):
     """
@@ -63,6 +64,7 @@ class WhaleSentinelFlaskAgent(object):
             """
             Decorator to protect the Flask with Whale Sentinel Protection
             """
+            @wraps(func)
             def wrapper(*args, **kwargs):
                 profile = Agent._profile(self)
                 if profile is None:
