@@ -103,7 +103,7 @@ class WhaleSentinelFlaskAgent(object):
                         return jsonify({
                                 "msg": "Forbidden: Request blocked by Whale Sentinel Protection.",
                                 "time": str(datetime.datetime.now()),
-                                "ip": request.client.host
+                                "ip": request.remote_addr
                             }), 403
 
                 if secure_response_enabled:
