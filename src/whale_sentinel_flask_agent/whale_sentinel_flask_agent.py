@@ -76,7 +76,7 @@ class WhaleSentinelFlaskAgent(object):
                 running_mode = profile.get("running_mode", "lite")
                 last_run_mode = profile.get("last_run_mode", "lite")
                 data_synchronized = profile.get("lite_mode_data_is_synchronized", False)
-                data_synchronize_status = profile.get("lite_mode_data_synchronize_status", "fail")
+                data_synchronize_status = profile.get("lite_mode_data_synchronize_status", "none")
                 secure_response_enabled = profile.get("secure_response_headers", {}).get("enable", False)
                 
                 result = make_response(func(*args, **kwargs))
@@ -88,7 +88,7 @@ class WhaleSentinelFlaskAgent(object):
                     request_meta_data = Protection.do(self, request)
                     threading.Thread(target=Protection._mode_lite, args=(self, request_meta_data), daemon=True).start()
 
-                if running_mode != "lite" and last_run_mode == "lite" and not data_synchronized and data_synchronize_status == "fail":
+                if running_mode != "lite" and last_run_mode == "lite" and not data_synchronized and data_synchronize_status == "none":
                     threading.Thread(target=Agent._synchronize, args=(self, profile), daemon=True).start()
 
                 if running_mode == "monitor":

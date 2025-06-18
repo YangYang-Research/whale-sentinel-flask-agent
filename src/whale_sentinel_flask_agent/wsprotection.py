@@ -77,14 +77,14 @@ class Protection(object):
             req_path = request.path
             req_host = request.host
             req_headers = request.headers
-            req_body = request.get_data(as_text=True)
+            req_body = request.get_data(as_text=True) if req_method != 'GET' else None
             req_query_string = request.query_string.decode('utf-8')
             req_ip = request.remote_addr if request.remote_addr else "N/A"
             req_user_agent = request.user_agent.string if request.user_agent else "N/A"
             req_content_type = req_headers.get("Content-Type", "N/A")
             req_content_length = int(req_headers.get("Content-Length", 0))
             req_referrer = request.referrer if request.referrer else "N/A"
-            req_device = request.user_agent.platform
+            req_device = request.user_agent.platform 
             req_network = request.user_agent.browser
 
             parsed_ua = parse(req_user_agent)
@@ -92,6 +92,20 @@ class Protection(object):
             req_ua_browser = parsed_ua.browser.family
             req_ua_browser_version = parsed_ua.browser.version_string
 
+            uploaded_files_info = []
+
+            for file in request.files.values():
+                file.seek(0, 2)  # Move to end of file
+                size = file.tell()  # Current position = size in bytes
+                file.seek(0)  # Reset for later use
+
+                file_info = {
+                    'filename': file.filename,
+                    'size': len(file.read())
+                }
+                file.seek(0)  # Reset the file pointer so you can read or save it later
+                uploaded_files_info.append(file_info)
+    
             meta_data = {
                 "payload": {
                     "data": {
@@ -116,7 +130,8 @@ class Protection(object):
                                 "referrer": req_referrer
                             },
                             "body": req_body,
-                            "query_parameters": req_query_string
+                            "query_parameters": req_query_string,
+                            "files": uploaded_files_info
                         },
                     }
                 },
