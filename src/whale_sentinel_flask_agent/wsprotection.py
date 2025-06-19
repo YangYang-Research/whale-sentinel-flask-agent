@@ -1,3 +1,5 @@
+import base64
+import hashlib
 from user_agents import parse
 from datetime import datetime, timezone
 from .wslogger import wslogger
@@ -93,18 +95,23 @@ class Protection(object):
             req_ua_browser_version = parsed_ua.browser.version_string
 
             uploaded_files_info = []
+            if "multipart/form-data" in request.headers.get("content-type", ""):
+                for file in request.files.values():
+                    contents = file.read()
+                    file.seek(0)  # Reset for later use
 
-            for file in request.files.values():
-                file.seek(0, 2)  # Move to end of file
-                size = file.tell()  # Current position = size in bytes
-                file.seek(0)  # Reset for later use
+                    sha256_hash = hashlib.sha256(contents).hexdigest()
+                    encoded_content = base64.b64encode(contents).decode("utf-8")
+                    file_size = len(contents)
 
-                file_info = {
-                    'filename': file.filename,
-                    'size': len(file.read())
-                }
-                file.seek(0)  # Reset the file pointer so you can read or save it later
-                uploaded_files_info.append(file_info)
+                    file_info = {
+                        'file_name': file.filename,
+                        'file_size': len(file.read()),
+                        'file_content': encoded_content,
+                        'file_type': file.content_type,
+                        'file_hash256': sha256_hash
+                    }
+                    uploaded_files_info.append(file_info)
     
             meta_data = {
                 "payload": {
