@@ -32,8 +32,13 @@ This decorator is applied to Flask route handlers to enable Whale Sentinel's pro
 **Example**:
 
 ```python
+from whale_sentinel_flask_agent import WhaleSentinelFlaskAgent
+from flask import jsonify
+
+ws_agent = WhaleSentinelFlaskAgent()
+
 @app.route('/api/secure-data')
-@agent.whale_sentinel_agent_protection()
+@ws_agent.whale_sentinel_agent_protection()
 def secure_endpoint():
     return jsonify({"status": "protected"})
 ```
@@ -93,8 +98,13 @@ For each uploaded file, the following metadata is collected:
 Apply the decorator to any Flask route you want to protect:
 
 ```python
+from whale_sentinel_flask_agent import WhaleSentinelFlaskAgent
+from flask import jsonify
+
+ws_agent = WhaleSentinelFlaskAgent()
+
 @app.route('/login')
-@agent.whale_sentinel_agent_protection()
+@ws_agent.whale_sentinel_agent_protection()
 def login():
     return jsonify({"message": "This route is monitored and protected."})
 ```
