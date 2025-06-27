@@ -5,8 +5,11 @@ from .wslogger import wslogger
 from .wsprotection import Protection
 from .wsagent import Agent
 import threading
-import datetime
+from datetime import datetime, timezone
 from functools import wraps
+from cachetools import TTLCache
+
+cache = TTLCache(maxsize=1000, ttl=60)  # Max size of 1000 and TTL of 60 seconds
 
 class WhaleSentinelFlaskAgent(object):
     """
@@ -77,12 +80,39 @@ class WhaleSentinelFlaskAgent(object):
                 last_run_mode = profile.get("last_run_mode", "lite")
                 data_synchronized = profile.get("lite_mode_data_is_synchronized", False)
                 data_synchronize_status = profile.get("lite_mode_data_synchronize_status", "none")
+                rate_limit_enable = profile.get("ws_request_rate_limit", {}).get("enable", False)
+                rate_limit_threshold = profile.get("ws_request_rate_limit", {}).get("threshold", 100)
                 secure_response_enabled = profile.get("secure_response_headers", {}).get("enable", False)
                 
+                client_ip_address = (
+                    request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+                    if "X-Forwarded-For" in request.headers
+                    else request.remote_addr
+                )
                 result = make_response(func(*args, **kwargs))
                 
                 if running_mode == "off":
                     return result
+
+                if rate_limit_enable:
+                    client_request_temp_id = (
+                        f"{client_ip_address}_{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}"
+                    )
+                    request_count = cache.get(client_request_temp_id)
+                    if request_count is None:
+                        cache[client_request_temp_id] = 1
+                    elif request_count >= rate_limit_threshold:
+                        request_meta_data = Protection.do(self, request)
+                        threading.Thread(target=Agent._write_to_storage, args=(self, request_meta_data), daemon=True).start()
+
+                        wslogger.info("Whale Sentinel Flask Agent Protection: Request blocked by Whale Sentinel Protection")
+                        return jsonify({
+                                "msg": "Forbidden: Request blocked by Whale Sentinel Protection.",
+                                "time": str(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')),
+                                "ip": client_ip_address
+                            }), 403
+                    else:
+                        cache[client_request_temp_id] += 1
 
                 if running_mode  == "lite":
                     request_meta_data = Protection.do(self, request)
@@ -102,8 +132,8 @@ class WhaleSentinelFlaskAgent(object):
                         wslogger.info("Whale Sentinel Flask Agent Protection: Request blocked by Whale Sentinel Protection")
                         return jsonify({
                                 "msg": "Forbidden: Request blocked by Whale Sentinel Protection.",
-                                "time": str(datetime.datetime.now()),
-                                "ip": request.remote_addr
+                                "time": str(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')),
+                                "ip": client_ip_address
                             }), 403
 
                 if secure_response_enabled:
